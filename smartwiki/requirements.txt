@@ -1,6 +1,6 @@
 langchain==0.1.16
 python-dotenv==1.0.0
-streamlit==1.18.1
+streamlit==1.35.0
 faiss-cpu==1.7.4
 altair==4.0.0
 tiktoken==0.5.2
@@ -9,9 +9,8 @@ langchain_community==0.0.37
 langchain_google_genai==1.0.3
 matplotlib==3.8.4
 wikipedia==1.4.0
-# uncomment to use huggingface llms
-# huggingface-hub==0.14.1
-
-# uncomment to use instructor embeddings
-# InstructorEmbedding==1.0.1
-# sentence-transformers==2.2.2streamlit==1.18.1
+gtts==2.5.1
+googletrans==4.0.0rc1
+plotly==5.22.0
+pandas==2.2.2
+numpy==1.26.4
