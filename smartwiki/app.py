@@ -18,7 +18,7 @@ import re
 
 
 # Set page title and configure layout
-st.set_page_config(page_title="Smart Wiki", layout="wide")
+st.set_page_config(page_title="Smart Tutor", layout="wide")
 
 # Create necessary directory
 os.makedirs("temp", exist_ok=True)
@@ -251,7 +251,7 @@ def main():
     st.session_state.english_accent = tld
 
     # Main content area
-    st.markdown("<h1 style='text-align: center; color: white; padding: 10px; background-color: #002147;'>SmartWiki</h1>", unsafe_allow_html=True)
+    st.markdown("<h1 style='text-align: center; color: white; padding: 10px; background-color: #002147;'>SmartTutor</h1>", unsafe_allow_html=True)
     st.markdown("---")  # Horizontal rule
 
     if google_api_key:
@@ -260,7 +260,7 @@ def main():
         newmodel = genai.GenerativeModel(model_name="gemini-1.5-pro")
 
         # Input prompt
-        st.session_state.prompt = st.text_input('Enter your topic here to get Wikipedia result', value=st.session_state.prompt)
+        st.session_state.prompt = st.text_input('Enter your topic here to get result', value=st.session_state.prompt)
 
         if st.session_state.google_api_key and st.session_state.prompt:
             if st.session_state.prompt != st.session_state.last_prompt:
