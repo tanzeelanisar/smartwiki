@@ -18,7 +18,7 @@ import re
 
 
 # Set page title and configure layout
-st.set_page_config(page_title="Smart Tutor", layout="wide")
+st.set_page_config(page_title="Smart Wiki", layout="wide")
 
 # Create necessary directory
 os.makedirs("temp", exist_ok=True)
@@ -104,9 +104,16 @@ def generate_related_topics(prompt, n_topics=5):
     related_topic_memory = ConversationBufferMemory(input_key='topic', memory_key='chat_history')
     llm = ChatGoogleGenerativeAI(model="gemini-pro", temperature=0.6, top_p=0.85, google_api_key=st.session_state.google_api_key)
     related_topic_chain = LLMChain(llm=llm, prompt=related_prompt_template, verbose=True, output_key='related_topics', memory=related_topic_memory)
-    related_topics_response = related_topic_chain.run({'topic': prompt})
-    related_topics = related_topics_response.split('\n')
-    return related_topics
+    try:
+        related_topics_response = related_topic_chain.run({'topic': prompt})
+        related_topics = related_topics_response.split('\n')
+        return related_topics
+    except genai.types.StopCandidateException as e:
+        st.error("The AI model detected potentially harmful content and could not generate related topics. Please try a different prompt.")
+        return []
+    except Exception as e:
+        st.error(f"An error occurred: {str(e)}")
+        return []
 
 # Function to retrieve and process Wikipedia information
 def retrieve_and_process_wikipedia_info(prompt):
@@ -210,7 +217,7 @@ def create_bar_chart(info):
                     data.append((title, number))
 
     if not data:
-        st.warning("No valid numeric data found in Wikipedia information.")
+        st.warning("No valid  data found")
         return None
     else:
         df = pd.DataFrame(data, columns=['Title', 'Number'])
@@ -260,20 +267,21 @@ def main():
         newmodel = genai.GenerativeModel(model_name="gemini-1.5-pro")
 
         # Input prompt
-        st.session_state.prompt = st.text_input('Enter your topic here to get result', value=st.session_state.prompt)
+        st.session_state.prompt = st.text_input('Enter your search query', value=st.session_state.prompt)
 
         if st.session_state.google_api_key and st.session_state.prompt:
             if st.session_state.prompt != st.session_state.last_prompt:
                 
                 # Apply differential privacy to the input prompt
-                dp_prompt = detect_and_apply_privacy(st.session_state.prompt)
-                st.session_state.prompt = dp_prompt
-                st.session_state.last_prompt = dp_prompt
 
-                st.session_state.info, st.session_state.knowledge_graph_info = retrieve_and_process_wikipedia_info(st.session_state.prompt)
+                st.session_state.last_prompt =  st.session_state.prompt
+
+                dp_prompt = detect_and_apply_privacy(st.session_state.prompt)
+
+                st.session_state.info, st.session_state.knowledge_graph_info = retrieve_and_process_wikipedia_info(dp_prompt)
 
             # Display Wikipedia search results within an expander
-            with st.expander("Wikipedia Search Results", expanded=False):
+            with st.expander("Wikipedia Results", expanded=False):
                 st.write(wiki.run(st.session_state.prompt))
 
             st.markdown("---")
@@ -292,7 +300,7 @@ def main():
             
             # Column 2: Knowledge graph information
             with col2:
-                st.write("### Knowledge Graph Information")
+                st.write("### Knowledge Graph")
                 st.write(st.session_state.knowledge_graph_info)
 
             st.markdown("---")
@@ -303,14 +311,16 @@ def main():
             st.plotly_chart(fig)
 
             # Bar chart
-            st.write("### Bar Chart Visualization")
             fig = create_bar_chart(st.session_state.info)
-            st.plotly_chart(fig)
+            if(fig!= None):
+                st.write("### Bar Chart")
+                st.plotly_chart(fig)
 
             st.markdown("---")
 
             # Suggest related topics based on the user's input
-            related_topics = generate_related_topics(st.session_state.prompt)
+            dp_prompt_topics = detect_and_apply_privacy(st.session_state.prompt)
+            related_topics = generate_related_topics(dp_prompt_topics)
 
             # Create a dropdown for related topics
             selected_related_topic = st.selectbox("Related Topics", related_topics)
@@ -328,9 +338,9 @@ def main():
                 # Apply differential privacy to the input prompt
                 dp_prompt = detect_and_apply_privacy(st.session_state.explore_more_prompt)
 
-                st.session_state.explore_more_prompt = dp_prompt
+                #st.session_state.explore_more_prompt = dp_prompt
 
-                responsenew = newmodel.generate_content(st.session_state.explore_more_prompt)
+                responsenew = newmodel.generate_content(dp_prompt)
                 updatedres = responsenew._result.candidates[0].content.parts[0].text
                 with st.expander("AI Results", expanded=False):
                     st.write(updatedres)
